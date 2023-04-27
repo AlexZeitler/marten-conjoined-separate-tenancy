@@ -1,0 +1,21 @@
+{
+  "name": "marten-conjoined-separate-tenancy",
+  "version": "1.0.0",
+  "description": "Experiments with Marten conjoined and separate tenancy within the same host",
+  "main": "index.js",
+  "scripts": {
+    "dev-test": "tmuxinator start -p .tmuxinator-test.yml",
+    "stop": "docker stop $(docker ps -aq); docker rm $(docker ps -aq);tmux kill-session"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexZeitler/marten-conjoined-separate-tenancy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AlexZeitler/marten-conjoined-separate-tenancy/issues"
+  },
+  "homepage": "https://github.com/AlexZeitler/marten-conjoined-separate-tenancy#readme"
+}

@@ -1,0 +1,28 @@
+name: kliento
+root: ./
+
+# Runs before everything. Use it to start daemons etc.
+on_project_start:
+  - echo starting stack...
+
+# Runs in each window and pane before window/pane specific commands. Useful for setting up interpreter versions.
+# pre_window: rbenv shell 2.0.0-p247
+
+# Pass command line options to tmux. Useful for specifying a different tmux.conf.
+# tmux_options: -f ~/.tmux.mac.conf
+
+# Specifies (by name or index) which window will be selected on project startup. If not set, the first window is used.
+# startup_window: input
+
+pre_window:
+windows:
+  - tests:
+      layout: even-vertical
+      panes:
+        - marten-test:
+            - printf '\033]2;%s\033\\' 'marten-test'
+            - cd src/MartenConjoinedSeparateTenancy.Tests/test-database
+            - docker compose up
+        - workspace:
+            - printf '\033]2;%s\033\\' 'database-workspace'
+            - clear
