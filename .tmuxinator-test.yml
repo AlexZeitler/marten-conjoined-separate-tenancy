@@ -1,4 +1,4 @@
-name: kliento
+name: marten-tests
 root: ./
 
 # Runs before everything. Use it to start daemons etc.
