@@ -1,4 +1,5 @@
 using Marten;
+using Marten.Events.Projections;
 using Marten.Storage;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,7 @@ using Npgsql;
 using Serilog;
 using Serilog.Extensions.Logging;
 using Weasel.Core;
+using Wolverine;
 using Xunit.Abstractions;
 using static MartenConjoinedSeparateTenancy.Tests.Helpers.EventStoreHelpers;
 
@@ -50,6 +52,7 @@ public static class MartenRegistrationExtensions
     services.AddMartenStore<ISubscriptionStore>(
       _ =>
       {
+        _.Projections.Snapshot<Chat>(SnapshotLifecycle.Inline);
         _.AutoCreateSchemaObjects = AutoCreate.All;
         _.MultiTenantedWithSingleServer(subscriptionsConnectionString);
       }
@@ -137,9 +140,14 @@ public class TestServices
             subscriptionsConnectionString,
             freeUsersConnectionString
           );
+          services.AddSingleton<PollingMartenEventListener<ISubscriptionStore>>();
+          services.AddSingleton<PollingMartenEventListener<IFreeUsersStore>>();
+          services.AddSingleton<IConfigureMarten, MartenEventListenerConfig<ISubscriptionStore>>();
+          services.AddSingleton<IConfigureMarten, MartenEventListenerConfig<IFreeUsersStore>>();
         }
       );
       builder.UseSerilog(serilogLogger);
+      builder.UseWolverine();
 
       return builder;
     }
@@ -151,6 +159,7 @@ public class TestServices
                                           throw new InvalidOperationException("SubscriptionsConnectionString");
       var freeUsersConnectionString = configuration.GetSection("EventStore")["FreeUsersConnectionString"] ??
                                       throw new InvalidOperationException("FreeUsersConnectionString");
+
 
       // var subscriptionsConnectionString = new NpgsqlConnectionStringBuilder()
       // {
@@ -175,8 +184,17 @@ public class TestServices
       // }.ToString();
       var builder = ConfigureHost.GetHostBuilder(
         configuration,
-        services => { services.AddMartenStores(subscriptionsConnectionString, freeUsersConnectionString); }
+        services =>
+        {
+          services.AddMartenStores(subscriptionsConnectionString, freeUsersConnectionString);
+          services.AddSingleton<PollingMartenEventListener<IFreeUsersStore>>();
+          services.AddSingleton<PollingMartenEventListener<ISubscriptionStore>>();
+          services.AddSingleton<IConfigureMarten, MartenEventListenerConfig<IFreeUsersStore>>();
+          services.AddSingleton<IConfigureMarten, MartenEventListenerConfig<ISubscriptionStore>>();
+        }
       );
+      
+      builder.UseWolverine();
 
       return builder;
     }

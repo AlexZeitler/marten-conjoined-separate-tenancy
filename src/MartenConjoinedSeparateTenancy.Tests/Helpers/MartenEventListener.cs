@@ -1,5 +1,6 @@
 using Marten;
 using Marten.Events;
+using Marten.Internal;
 using Marten.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MartenConjoinedSeparateTenancy.Tests.Helpers;
 
-public class PollingMartenEventListener : IDocumentSessionListener
+public class PollingMartenEventListener<T> : IDocumentSessionListener where T : IDocumentStore
 {
   private readonly ILogger _logger;
   readonly List<IEvent> _events = new();
@@ -74,11 +75,16 @@ public class PollingMartenEventListener : IDocumentSessionListener
   {
   }
 
-  public Task WaitForProjection<T>(Func<T, bool> predicate, CancellationToken? token = default)
+  public Task WaitForProjection<T>(
+    Func<T, bool> predicate,
+    CancellationToken? token = default
+  )
   {
     _logger.LogInformation($"Listener waiting for Projection {typeof(T)}");
 
-    void Check(CancellationToken token)
+    void Check(
+      CancellationToken token
+    )
     {
       var from = 0;
       var attempts = 1;
@@ -162,15 +168,14 @@ public class PollingMartenEventListener : IDocumentSessionListener
   }
 }
 
-// TODO next: register
-public class MartenEventListenerConfig : IConfigureMarten
+public class MartenEventListenerConfig<T> : IConfigureMarten<ISubscriptionStore> where T : IDocumentStore
 {
   public void Configure(
     IServiceProvider services,
     StoreOptions options
   )
   {
-    var listener = services.GetService<PollingMartenEventListener>();
+    var listener = services.GetService<PollingMartenEventListener<T>>();
     options.Listeners.Add(listener);
     options.Projections.AsyncListeners.Add(listener);
   }
