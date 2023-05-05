@@ -61,6 +61,7 @@ public static class MartenRegistrationExtensions
       _ =>
       {
         _.Connection(freeUsersConnectionString);
+        _.Projections.Snapshot<Chat>(SnapshotLifecycle.Inline);
         _.AutoCreateSchemaObjects = AutoCreate.All;
         _.Policies.ForAllDocuments(x => x.TenancyStyle = TenancyStyle.Conjoined);
       }
