@@ -34,7 +34,7 @@ public class InviteExternalUserToChatHandler
     var invited = new ExternalUserInvitedToChat(email, topic);
     await using var subscriptionSession =
       freeStore.LightweightSession(EventStore.GetSubscriptionEventStoreId(subscriptionId));
-    await using var freeSession = freeStore.LightweightSession();
+    await using var freeSession = freeUsersStore.LightweightSession("green");
 
     var stream = Guid.NewGuid();
     subscriptionSession.Events.Append(stream, invited);
