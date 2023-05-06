@@ -168,7 +168,7 @@ public class PollingMartenEventListener<T> : IDocumentSessionListener where T : 
   }
 }
 
-public class MartenEventListenerConfig<T> : IConfigureMarten<ISubscriptionStore> where T : IDocumentStore
+public class MartenEventListenerConfig<T> : IConfigureMarten<T> where T : IDocumentStore
 {
   public void Configure(
     IServiceProvider services,
