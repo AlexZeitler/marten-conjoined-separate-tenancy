@@ -114,33 +114,13 @@ public class TestServices
         services =>
         {
           services.AddSingleton(dotnetILogger);
-          // var subscriptionsConnectionString = configuration.GetSection("EventStore")["SubscriptionsConnectionString"];
-          // var freeUsersConnectionString = configuration.GetSection("EventStore")["FreeUsersConnectionString"];
-          var subscriptionsConnectionString = new NpgsqlConnectionStringBuilder()
-          {
-            Pooling = false,
-            Port = 5435,
-            Host = "localhost",
-            CommandTimeout = 20,
-            Database = "postgres",
-            Password = "123456",
-            Username = "postgres"
-          }.ToString();
+          var subscriptionsConnectionString = configuration.GetSection("EventStore")["SubscriptionsConnectionString"] ??
+                                              throw new InvalidOperationException("SubscriptionsConnectionString");
           ;
-          var freeUsersConnectionString = new NpgsqlConnectionStringBuilder()
-          {
-            Pooling = false,
-            Port = 5436,
-            Host = "localhost",
-            CommandTimeout = 20,
-            Database = "postgres",
-            Password = "123456",
-            Username = "postgres"
-          }.ToString();
-          services.AddMartenStores(
-            subscriptionsConnectionString,
-            freeUsersConnectionString
-          );
+          var freeUsersConnectionString = configuration.GetSection("EventStore")["FreeUsersConnectionString"] ??
+                                          throw new InvalidOperationException("FreeUsersConnectionString");
+
+          services.AddMartenStores(subscriptionsConnectionString, freeUsersConnectionString);
           services.AddSingleton<PollingMartenEventListener<ISubscriptionStore>>();
           services.AddSingleton<PollingMartenEventListener<IFreeUsersStore>>();
           services.AddSingleton<IConfigureMarten, MartenEventListenerConfig<ISubscriptionStore>>();
@@ -162,27 +142,6 @@ public class TestServices
                                       throw new InvalidOperationException("FreeUsersConnectionString");
 
 
-      // var subscriptionsConnectionString = new NpgsqlConnectionStringBuilder()
-      // {
-      //   Pooling = false,
-      //   Port = 5435,
-      //   Host = "localhost",
-      //   CommandTimeout = 20,
-      //   Database = "postgres",
-      //   Password = "123456",
-      //   Username = "postgres"
-      // }.ToString();
-      // ;
-      // var freeUsersConnectionString = new NpgsqlConnectionStringBuilder()
-      // {
-      //   Pooling = false,
-      //   Port = 5436,
-      //   Host = "localhost",
-      //   CommandTimeout = 20,
-      //   Database = "postgres",
-      //   Password = "123456",
-      //   Username = "postgres"
-      // }.ToString();
       var builder = ConfigureHost.GetHostBuilder(
         configuration,
         services =>
@@ -194,7 +153,7 @@ public class TestServices
           services.AddSingleton<IConfigureMarten, MartenEventListenerConfig<ISubscriptionStore>>();
         }
       );
-      
+
       builder.UseWolverine();
 
       return builder;
