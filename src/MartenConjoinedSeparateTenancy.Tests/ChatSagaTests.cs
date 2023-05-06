@@ -17,7 +17,8 @@ public class When_inviting_a_free_user_to_the_chat : IAsyncLifetime
   {
     _host = await (await new TestServices().GetTestHostBuilder()).StartAlbaAsync();
     var bus = _host.Services.GetService<IMessageBus>();
-    var listener = _host.Services.GetService<PollingMartenEventListener<ISubscriptionStore>>();
+    var subscriptionListener = _host.Services.GetService<PollingMartenEventListener<ISubscriptionStore>>();
+    var freeUsersListener = _host.Services.GetService<PollingMartenEventListener<IFreeUsersStore>>();
     _subscriptionId = new SubscriptionId(Guid.NewGuid());
     _email = $"jd-{_subscriptionId.Value}";
     var command = new InviteExternalUserToChat(
@@ -26,7 +27,8 @@ public class When_inviting_a_free_user_to_the_chat : IAsyncLifetime
       _subscriptionId
     );
     await bus.PublishAsync(command);
-    await listener.WaitForProjection<Chat>(p => p.Email == _email);
+    await subscriptionListener.WaitForProjection<Chat>(p => p.Email == _email);
+    await freeUsersListener.WaitForProjection<Chat2>(p => p.Email == _email);
   }
 
   [Fact]
@@ -42,8 +44,15 @@ public class When_inviting_a_free_user_to_the_chat : IAsyncLifetime
   }
 
   [Fact]
-  public void should_create_the_chat_projection_for_free_user()
+  public async Task should_create_the_chat_projection_for_free_user()
   {
+    var freeUsersStore = _host.Services.GetService<IFreeUsersStore>();
+    await using var session =
+      freeUsersStore.LightweightSession("green");
+    var chat = session.Query<Chat2>()
+      .Where(c => c.Email == _email)
+      .ToList();
+    chat.Count.ShouldBe(1);
   }
 
 
