@@ -26,19 +26,25 @@ public class InviteExternalUserToChatHandler
 {
   public async Task Handle(
     InviteExternalUserToChat invite,
-    ISubscriptionStore freeStore,
+    ISubscriptionStore subscriptionStore,
     IFreeUsersStore freeUsersStore
   )
   {
     var (email, topic, subscriptionId) = invite;
-    var invited = new ExternalUserInvitedToChat(email, topic);
+    
+    var invitedSubscription = new ExternalUserInvitedToChat(email, topic);
+    var invitedFree = new InvitedBySubscriptionUserToChat(email, topic);
+    
     await using var subscriptionSession =
-      freeStore.LightweightSession(EventStore.GetSubscriptionEventStoreId(subscriptionId));
+      subscriptionStore.LightweightSession(EventStore.GetSubscriptionEventStoreId(subscriptionId));
     await using var freeSession = freeUsersStore.LightweightSession("green");
 
-    var stream = Guid.NewGuid();
-    subscriptionSession.Events.Append(stream, invited);
-    freeSession.Events.Append(stream, invited);
+    var streamSubscription = Guid.NewGuid();
+    var streamFree = Guid.NewGuid();
+    
+    subscriptionSession.Events.Append(streamSubscription, invitedSubscription);
+    freeSession.Events.Append(streamFree, invitedFree);
+    
     await subscriptionSession.SaveChangesAsync();
     await freeSession.SaveChangesAsync();
   }
@@ -49,12 +55,46 @@ public record ExternalUserInvitedToChat(
   string Topic
 );
 
+public record InvitedBySubscriptionUserToChat(
+  string Email,
+  string Topic
+);
+
+public class Chat2
+{
+  public Chat2()
+  {
+  }
+
+  public Guid Id { get; set; }
+  public string Email { get; }
+  public string Topic { get; }
+
+  private Chat2(
+    string email,
+    string topic
+  )
+  {
+    Email = email;
+    Topic = topic;
+  }
+
+
+  public static Chat2 Create(
+    InvitedBySubscriptionUserToChat invitedToChat
+  )
+  {
+    var (email, topic) = invitedToChat;
+    return new Chat2(email, topic);
+  }
+}
+
 public class Chat
 {
   public Chat()
   {
-    
   }
+
   public Guid Id { get; set; }
   public string Email { get; }
   public string Topic { get; }
