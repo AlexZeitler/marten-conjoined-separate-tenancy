@@ -4,18 +4,25 @@ using MartenConjoinedSeparateTenancy.Tests.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Wolverine;
+using Xunit.Abstractions;
 
 namespace MartenConjoinedSeparateTenancy.Tests;
 
 public class When_inviting_a_free_user_to_the_chat : IAsyncLifetime
 {
+  private readonly ITestOutputHelper _testOutputHelper;
   private IAlbaHost _host;
   private string _email;
   private SubscriptionId _subscriptionId;
 
+  public When_inviting_a_free_user_to_the_chat(ITestOutputHelper testOutputHelper)
+  {
+    _testOutputHelper = testOutputHelper;
+  }
+
   public async Task InitializeAsync()
   {
-    _host = await (await new TestServices().GetTestHostBuilder()).StartAlbaAsync();
+    _host = await (await new TestServices().GetTestHostBuilder(_testOutputHelper)).StartAlbaAsync();
     var bus = _host.Services.GetService<IMessageBus>();
     var subscriptionListener = _host.Services.GetService<PollingMartenEventListener<ISubscriptionStore>>();
     var freeUsersListener = _host.Services.GetService<PollingMartenEventListener<IFreeUsersStore>>();
