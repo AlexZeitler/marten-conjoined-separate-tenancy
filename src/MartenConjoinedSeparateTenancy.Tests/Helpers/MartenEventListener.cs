@@ -32,7 +32,9 @@ public class PollingMartenEventListener<T> : IDocumentSessionListener where T : 
     CancellationToken token
   )
   {
-    _projections.AddRange(commit.Updated);
+    var documents = commit.Updated;
+    _logger.LogInformation($"AfterCommitAsync Listener collected {documents.Count()} documents");
+    _projections.AddRange(documents);
     var events = commit.GetEvents();
     _logger.LogInformation($"AfterCommitAsync Listener collected {events.Count()} events");
     _events.AddRange(events);
